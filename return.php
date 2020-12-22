@@ -20,3 +20,5 @@ $event = $events[0];
 $reply_token = $event->getReplyToken();
 $reply_text = $event->getText();
 $bot->replyText($reply_token, $reply_text);
+
+?>
