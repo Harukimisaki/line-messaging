@@ -1,24 +1,49 @@
 <?php
-require('vendor/autoload.php');
-
-use LINE\LINEBot\Constant\HTTPHeader;
-use LINE\LINEBot\HTTPClient\CurlHTTPClient;
-use LINE\LINEBot;
-
-//先ほど取得したチャネルシークレットとチャネルアクセストークンを以下の変数にセット
-$channel_access_token = 'Rg0h9TK7mxOWbj+5QtpaVetwpOab+9UsK+CLSTrTxTSicWnrEY8OdcwYxaZ0lDuH7ak7oxlO3uyCSFF6ozYj3Hanh0G
+/**
+ * Copyright 2016 LINE Corporation
+ *
+ * LINE Corporation licenses this file to you under the Apache License,
+ * version 2.0 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at:
+ *
+ *   https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations
+ * under the License.
+ */
+require_once('./LINEBotTiny.php');
+$channelAccessToken = 'Rg0h9TK7mxOWbj+5QtpaVetwpOab+9UsK+CLSTrTxTSicWnrEY8OdcwYxaZ0lDuH7ak7oxlO3uyCSFF6ozYj3Hanh0G
 rzrITQvtynLeioZgRKwf08xv2FbxidNn5GSjoQOR7jZe+7+tvbmUROQrePAdB04t89/1O/w1cDnyilFU=';
-$channel_secret = '594788b90da99c9adc4256cb9ef9fa5a';
-
-$http_client = new CurlHTTPClient($channel_access_token);
-$bot = new LINEBot($http_client, ['channelSecret' => $channel_secret]);
-$signature = $_SERVER['HTTP_' . HTTPHeader::LINE_SIGNATURE];
-$http_request_body = file_get_contents('php://input');
-$events = $bot->parseEventRequest($http_request_body, $signature);
-$event = $events[0];
-
-$reply_token = $event->getReplyToken();
-$reply_text = $event->getText();
-$bot->replyText($reply_token, $reply_text);
+$channelSecret = '594788b90da99c9adc4256cb9ef9fa5a';
+$client = new LINEBotTiny($channelAccessToken, $channelSecret);
+foreach ($client->parseEvents() as $event) {
+    switch ($event['type']) {
+        case 'message':
+            $message = $event['message'];
+            switch ($message['type']) {
+                case 'text':
+                    $client->replyMessage(array(
+                        'replyToken' => $event['replyToken'],
+                        'messages' => array(
+                            array(
+                                'type' => 'text',
+                                'text' => $message['text']
+                            )
+                        )
+                    ));
+                    break;
+                default:
+                    error_log("Unsupporeted message type: " . $message['type']);
+                    break;
+            }
+            break;
+        default:
+            error_log("Unsupporeted event type: " . $event['type']);
+            break;
+    }
+};
 
 ?>
